@@ -473,20 +473,20 @@ bot.sendMessage(chatId, 'Укажите время проката SUP-доски
         `<i>Имя:</i> ${userData.name} \n` +
         'Ожидайте ответа по Вашей заявке!', { parse_mode: 'HTML', reply_markup: keyboardresultsup });
 
-          const query = 'INSERT INTO reservSup (user_id, Время_проката, Дата_проката, Время_брони, Телефон, Имя) VALUES (?, ?, ?, ?, ?, ?)';
+          const query = 'INSERT INTO reservsup (user_id, Время_проката, Дата_проката, Время_брони, Телефон, Имя) VALUES (?, ?, ?, ?, ?, ?)';
           const values = [chatId, userData.rentalTime, userData.rentalDate, userData.rentalTimelock, userData.phone, userData.name];
           const sqlite3 = require('sqlite3').verbose();
           const db = new sqlite3.Database('SamaraPower.db');
 
           const insertQuery = `
-            INSERT INTO reservbike (user_id, Время_проката, Пол, Дата_проката, Время_брони, Телефон, Имя)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO reservsup (user_id, Время_проката, Дата_проката, Время_брони, Телефон, Имя)
+            VALUES (?, ?, ?, ?, ?, ?)
           `;
 
           // Замените значения переменных values на ваши данные
-          const valuesbike = [chatId, Время_проката, Пол, Дата_проката, Время_брони, Телефон, Имя];
+          const valuessup = [chatId, userData.rentalTime, userData.rentalDate, userData.rentalTimelock, userData.phone, userData.name];
 
-          db.run(insertQuery, valuesbike, function(err) {
+          db.run(insertQuery, valuessup, function(err) {
             if (err) {
               console.error('Ошибка при вставке данных: ', err);
               return;
