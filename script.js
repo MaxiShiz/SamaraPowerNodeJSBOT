@@ -6,10 +6,11 @@ let shouldBotReact = true;
 
 //Админ панель
 const connectionadmin = mysql.createConnection({
-  host: '127.0.0.1',
-  user: 'mysql',
-  password: 'mysql',
-  database: 'samarapower'
+  host: '81.200.151.250',
+  user: 'gen_user',
+  password: 'SamaraPower123',
+  database: 'default_db',
+  port: "3306"
 });
 const AdminID = '-1001656677431';
 const adminbut = [
@@ -278,13 +279,14 @@ function checkNewSup() { // Функция проверки и оповещен�
   });
 }
 
-/*
+
   // Создание таблицы
 const connectiontable = mysql.createConnection({
-  host: '127.0.0.1',
-  user: 'mysql',
-  password: 'mysql',
-  database: 'samarapower'
+  host: '81.200.151.250',
+  user: 'gen_user',
+  password: 'SamaraPower123',
+  database: 'default_db',
+  port: "3306"
 });
 
   const createTableQuery = `
@@ -322,7 +324,8 @@ const connectiontable = mysql.createConnection({
 
     console.log('Строка добавлена!');
   });
-*/
+
+
 
 let userChatIdFM = [];
 
@@ -479,10 +482,11 @@ bot.sendMessage(chatId, 'Укажите время проката SUP-доски
           const query = 'INSERT INTO reservSup (user_id, Время_проката, Дата_проката, Время_брони, Телефон, Имя) VALUES (?, ?, ?, ?, ?, ?)';
           const values = [chatId, userData.rentalTime, userData.rentalDate, userData.rentalTimelock, userData.phone, userData.name];
           const connection = mysql.createConnection({
-          host: '127.0.0.1',
-          user: 'mysql',
-          password: 'mysql',
-          database: 'samarapower'
+            host: '81.200.151.250',
+            user: 'gen_user',
+            password: 'SamaraPower123',
+            database: 'default_db',
+            port: "3306"
         });
           
           connection.query(query, values, (err, result) => {
@@ -606,10 +610,11 @@ bot.sendMessage(chatId, 'Укажите время проката велосип
           const query = 'INSERT INTO reservBike (user_id, Время_проката, Пол, Дата_проката, Время_брони, Телефон, Имя) VALUES (?, ?, ?, ?, ?, ?, ?)';
           const values = [chatId, userData.rentalTime, userData.gender, userData.rentalDate, userData.rentalTimelock, userData.phone, userData.name];
           const connection = mysql.createConnection({
-          host: '127.0.0.1',
-          user: 'mysql',
-          password: 'mysql',
-          database: 'samarapower'
+            host: '81.200.151.250',
+            user: 'gen_user',
+            password: 'SamaraPower123',
+            database: 'default_db',
+            port: "3306"
         });
           
           connection.query(query, values, (err, result) => {
