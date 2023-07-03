@@ -1,17 +1,24 @@
 const TelegramBot = require('node-telegram-bot-api');
 const token = '5966038361:AAF_dEcs1l_3vAuL0TUCC0P5-Xj4ZcHsWR0';
-const mysql = require('mysql');
+const sqlite3 = require('sqlite3').verbose();
 const bot = new TelegramBot(token, {polling: true});
+const db = new sqlite3.Database('SamaraPower.db');
 let shouldBotReact = true;
 
-//Админ панель
-const connectionadmin = mysql.createConnection({
-     port: "3306",
-     user: "gen_user",
-     host: "92.51.39.162",
-     database: "default_db",
-     password: "mysqlroot123"
-});
+const fs = require('fs');
+
+function sendFileToAdmin (AdminID, filePath) {
+  bot.sendDocument(AdminID, filePath)
+  .then(() => {
+    console.log('Файл успешно отправлен в админ-чат');
+  })
+  .catch((error) => {
+    console.error('Ошибка при отправке файла: ', error);
+  });
+  bot.sendMessage(AdminID, 'Обновленный файл базы данных SamaraPower!');
+}
+
+const filePath = 'SamaraPower.db';
 const AdminID = '-1001656677431';
 const adminbut = [
       [{ text: '✅ Одобрить заявку! ', callback_data: 'approve'}],
@@ -39,8 +46,36 @@ const keyboardhelpst = {
 };
 
 
+bot.onText(/\/sendfileDB/, (msg) => {
+  const chatId = msg.chat.id;
+    sendFileToAdmin(AdminID, filePath);
+});
+
+
+bot.onText(/\/sentallmessage/, (msg) => {
+  const chatId = msg.chat.id;
+
+  bot.sendMessage(chatId, 'Введите сообщение для рассылки:');
+
+  bot.once('message', (message) => {
+    const text = message.text;
+
+    userChatIdFM.forEach((chatId) => {
+      bot.sendMessage(chatId, text)
+      .then(() => {
+        bot.sendMessage(AdminID, 'Рассылка отправлена!');
+        console.log('Рассылка отправлена!');
+      })
+        .catch((error) => {
+          console.error('Ошибка рассылки: ', error);
+        });
+      });
+    });
+  });
+
+
 // Прокат Велосипедов
-setInterval(checkNewBike, 5000); // Интервал проверки таблицы на новые значения
+setInterval(checkNewBike, 10000); // Интервал проверки таблицы на новые значения
 let sentMessages = {};
 let bookingId;
 let rentalTime, gender, rentalDate, rentalTimelock, phone, name;
@@ -58,7 +93,7 @@ bot.on('callback_query', async (query) => {
   if (data === 'approve') { // Нажатие на кнопку подтверждения
     const messageIdadm = sentMessages[bookingId];
     if (messageIdadm) {
-      connectionadmin.query("UPDATE reservbike SET Статус = 'Одобрено' WHERE id = ?", [bookingId], (error) => {
+      db.run("UPDATE reservbike SET Статус = 'Одобрено' WHERE id = ?", [bookingId], (error) => {
         if (error) { // Обновление статуса в таблице
           console.error('Ошибка при обновлении данных в таблице: ', error);
         }
@@ -81,7 +116,7 @@ bot.on('callback_query', async (query) => {
   } else if (data === 'reject') { // Нажатие на кнопку отклонения
     const messageIdadm = sentMessages[bookingId];
     if (messageIdadm) {
-      connectionadmin.query("UPDATE reservbike SET Статус = 'Отклонено' WHERE id = ?", [bookingId], (error) => {
+      db.run("UPDATE reservbike SET Статус = 'Отклонено' WHERE id = ?", [bookingId], (error) => {
         if (error) { // Обновление статуса в таблице
           console.error('Ошибка при обновлении данных в таблице: ', error);
         }
@@ -129,14 +164,14 @@ function notifyUsersup(chatIdsup, statussup) {
 }
 
 function checkNewBike() { // Функция проверки и оповещения о новых заявках
+    db.serialize(() => {
+      db.each("SELECT * FROM reservbike WHERE Статус = 'Ожидание'", (error, row) => {
+        if (error) {
+          console.error('Ошибка поиска для админ панели: ', error)
+          return;
+        }
+    
   const AdminID = '-1001656677431'; // ID админ-чата
-  connectionadmin.query("SELECT * FROM reservbike WHERE Статус = 'Ожидание'", (error, rows) => {
-    if (error) {
-      console.error('Ошибка поиска для админ панели: ', error);
-      return;
-    } // Условия проверки таблицы
-
-    rows.forEach((row) => { // Массив заголовков таблицы
       userId = row.user_id // ChatId юзера
       bookingId = row.id; // Порядковый номер клиента
       rentalTime = row.Время_проката; // Время проката
@@ -180,7 +215,7 @@ const adminbutsup = [
       };
 
 // Прокат SUP
-setInterval(checkNewSup, 5000); // Интервал проверки таблицы на новые значения
+setInterval(checkNewSup, 10000); // Интервал проверки таблицы на новые значения
 let sentMessagessup = {};
 let bookingIdsup;
 let rentalTimesup, rentalDatesup, rentalTimelocksup, phonesup, namesup;
@@ -197,7 +232,7 @@ bot.on('callback_query', async (query) => {
   if (data === 'approvesup') { // Нажатие на кнопку подтверждения
     const messageIdadm = sentMessagessup[bookingIdsup];
     if (messageIdadm) {
-      connectionadmin.query("UPDATE reservsup SET Статус = 'Одобрено' WHERE id = ?", [bookingIdsup], (error) => {
+      db.run("UPDATE reservsup SET Статус = 'Одобрено' WHERE id = ?", [bookingIdsup], (error) => {
         if (error) { // Обновление статуса в таблице
           console.error('Ошибка при обновлении данных в таблице: ', error);
         }
@@ -219,7 +254,7 @@ bot.on('callback_query', async (query) => {
   } else if (data === 'rejectsup') { // Нажатие на кнопку отклонения
     const messageIdadm = sentMessagessup[bookingIdsup];
     if (messageIdadm) {
-      connectionadmin.query("UPDATE reservsup SET Статус = 'Отклонено' WHERE id = ?", [bookingIdsup], (error) => {
+      db.run("UPDATE reservsup SET Статус = 'Отклонено' WHERE id = ?", [bookingIdsup], (error) => {
         if (error) { // Обновление статуса в таблице
           console.error('Ошибка при обновлении данных в таблице: ', error);
         }
@@ -242,13 +277,13 @@ bot.on('callback_query', async (query) => {
 
 function checkNewSup() { // Функция проверки и оповещения о новых заявках
   const AdminID = '-1001656677431'; // ID админ-чата
-  connectionadmin.query("SELECT * FROM reservsup WHERE Статус = 'Ожидание'", (error, rows) => {
-    if (error) {
-      console.error('Ошибка поиска для админ панели: ', error);
-      return;
-    } // Условия проверки таблицы
+  db.serialize(() => {
+    db.each("SELECT * FROM reservsup WHERE Статус = 'Ожидание'", (err, row) => {
+      if (err) {
+        console.error('Ошибка при поиске для админ панели: ', err);
+        return;
+      }
 
-    rows.forEach((row) => { // Массив заголовков таблицы
       userIdsup = row.user_id;
       bookingIdsup = row.id; // Порядковый номер клиента
       rentalTimesup = row.Время_проката; // Время проката
@@ -279,52 +314,9 @@ function checkNewSup() { // Функция проверки и оповещен�
   });
 }
 
-/*
-  // Создание таблицы
-const connectiontable = mysql.createConnection({
-     port: "3306",
-     user: "gen_user",
-     host: "92.51.39.162",
-     database: "default_db",
-     password: "mysqlroot123"
-});
 
-  const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS reservSup (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      user_id INT,
-      Время_проката VARCHAR(50),
-      Дата_проката VARCHAR(50),
-      Время_брони VARCHAR(50),
-      Телефон VARCHAR(50),
-      Имя VARCHAR(50)
-    )
-  `;
 
-  const addDefaultNotifiedValueQuery = `
-  ALTER TABLE reservSup
-  ADD COLUMN Статус VARCHAR(50) DEFAULT 'Ожидание'
-`;
 
-  connectiontable.query(createTableQuery, (err) => {
-    if (err) {
-      console.error('Ошибка создания таблицы: ' + err.stack);
-      return;
-    }
-
-    console.log('Таблица "reservSup" успешно создана');
-
-  });
-
-    connectiontable.query(addDefaultNotifiedValueQuery, (err) => {
-    if (err) {
-      console.error('Ошибка добавления столбца: ' + err.stack);
-      return;
-    }
-
-    console.log('Строка добавлена!');
-  });
-*/
 
 
 let userChatIdFM = [];
@@ -358,6 +350,8 @@ bot.onText(/\/start/, async (msg) => {
       one_time_keyboard: true
     }
   }
+
+
 
 //Ветка обратной связи и отзывов
   bot.on('callback_query', async (query) => {
@@ -479,36 +473,39 @@ bot.sendMessage(chatId, 'Укажите время проката SUP-доски
         `<i>Имя:</i> ${userData.name} \n` +
         'Ожидайте ответа по Вашей заявке!', { parse_mode: 'HTML', reply_markup: keyboardresultsup });
 
-          const query = 'INSERT INTO reservsup (user_id, Время_проката, Дата_проката, Время_брони, Телефон, Имя) VALUES (?, ?, ?, ?, ?, ?)';
+          const query = 'INSERT INTO reservSup (user_id, Время_проката, Дата_проката, Время_брони, Телефон, Имя) VALUES (?, ?, ?, ?, ?, ?)';
           const values = [chatId, userData.rentalTime, userData.rentalDate, userData.rentalTimelock, userData.phone, userData.name];
-          const connection = mysql.createConnection({
-            host: '81.200.151.250',
-            user: 'gen_user',
-            password: 'SamaraPower123',
-            database: 'default_db',
-            port: "3306"
-        });
-          
-          connection.query(query, values, (err, result) => {
+          const sqlite3 = require('sqlite3').verbose();
+          const db = new sqlite3.Database('SamaraPower.db');
+
+          const insertQuery = `
+            INSERT INTO reservbike (user_id, Время_проката, Пол, Дата_проката, Время_брони, Телефон, Имя)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `;
+
+          // Замените значения переменных values на ваши данные
+          const valuesbike = [user_id, Время_проката, Пол, Дата_проката, Время_брони, Телефон, Имя];
+
+          db.run(insertQuery, valuesbike, function(err) {
             if (err) {
-              console.error('Все хуйня, Миша, ошибка данных: ' + err.stack);
+              console.error('Ошибка при вставке данных: ', err);
               return;
             }
 
-            console.log('Все заебись, данные в таблице');
+            console.log('Данные успешно вставлены в таблицу');
             dataSaved = true;
             shouldBotReact = true;
           });
-        }
+
 
         if (dataSaved) {
           delete userDatasup[chatId];
           return;
-        }
       }
-    });
+    }
+    }
   });
-
+  });
   } else if (data === 'bikebut') {
       const chatId = query.message.chat.id;
       const messageId = query.message.message_id;
@@ -563,42 +560,42 @@ bot.sendMessage(chatId, 'Укажите время проката велосип
   .then(() => {
     let dataSaved = false;
 
-    bot.on('message', async (msg) => {
-      const chatId = msg.chat.id;
-      if (!userDatabike[chatId]) {
-        return;
-      }
-      if (msg.from.id !== bot.botId) {
-      if (!userData.rentalTime) {
-        const rentalTime = msg.text;
-        userData.rentalTime = msg.text;
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  if (!userDatabike[chatId]) {
+    return;
+  }
+  if (msg.from.id !== bot.botId) {
+    if (!userData.rentalTime) {
+      const rentalTime = msg.text;
+      userData.rentalTime = msg.text;
 
-        bot.sendMessage(chatId, 'Укажите Ваш пол (мужской/женский)');
-      } else if (!userData.gender) {
-        const gender = msg.text;
-        userData.gender = gender;
+      bot.sendMessage(chatId, 'Укажите Ваш пол (мужской/женский)');
+    } else if (!userData.gender) {
+      const gender = msg.text;
+      userData.gender = gender;
 
-        bot.sendMessage(chatId, 'Укажите дату проката (например, 01.01.2023)');
-      } else if (!userData.rentalDate) {
-        const rentalDate = msg.text;
-        userData.rentalDate = rentalDate;
+      bot.sendMessage(chatId, 'Укажите дату проката (например, 01.01.2023)');
+    } else if (!userData.rentalDate) {
+      const rentalDate = msg.text;
+      userData.rentalDate = rentalDate;
 
-        bot.sendMessage(chatId, 'Укажите время, в которое Вы бы хотели взять велосипед (например, 10:00)');
-      } else if (!userData.rentalTimelock) {
-        const rentalTimelock = msg.text;
-        userData.rentalTimelock = rentalTimelock;
+      bot.sendMessage(chatId, 'Укажите время, в которое Вы бы хотели взять велосипед (например, 10:00)');
+    } else if (!userData.rentalTimelock) {
+      const rentalTimelock = msg.text;
+      userData.rentalTimelock = rentalTimelock;
 
-        bot.sendMessage(chatId, 'Укажите Ваш телефон');
-      } else if (!userData.phone) {
-        const phone = msg.text;
-        userData.phone = phone;
+      bot.sendMessage(chatId, 'Укажите Ваш телефон');
+    } else if (!userData.phone) {
+      const phone = msg.text;
+      userData.phone = phone;
 
-        bot.sendMessage(chatId, 'Укажите Ваше имя');
-      } else if (!userData.name) {
-        const name = msg.text;
-        userData.name = name;
+      bot.sendMessage(chatId, 'Укажите Ваше имя');
+    } else if (!userData.name) {
+      const name = msg.text;
+      userData.name = name;
 
-        bot.sendMessage(chatId, `Спасибо за заполнение заявки. Ваши данные: \n\n` +
+      bot.sendMessage(chatId, `Спасибо за заполнение заявки. Ваши данные: \n\n` +
         `<i>Время проката:</i> ${userData.rentalTime} \n` +
         `<i>Пол:</i> ${userData.gender} \n` +
         `<i>Дата проката:</i> ${userData.rentalDate} \n` +
@@ -607,37 +604,38 @@ bot.sendMessage(chatId, 'Укажите время проката велосип
         `<i>Имя:</i> ${userData.name} \n` +
         'Ожидайте ответа по Вашей заявке!', { parse_mode: 'HTML', reply_markup: keyboardresult });
 
-          const query = 'INSERT INTO reservbike (user_id, Время_проката, Пол, Дата_проката, Время_брони, Телефон, Имя) VALUES (?, ?, ?, ?, ?, ?, ?)';
-          const values = [chatId, userData.rentalTime, userData.gender, userData.rentalDate, userData.rentalTimelock, userData.phone, userData.name];
-          const connection = mysql.createConnection({
-             port: "3306",
-             user: "gen_user",
-             host: "92.51.39.162",
-             database: "default_db",
-             password: "mysqlroot123"
-        });
-          
-          connection.query(query, values, (err, result) => {
-            if (err) {
-              console.error('Все хуйня, Миша, ошибка данных: ' + err.stack);
-              return;
-            }
+      const sqlite3 = require('sqlite3').verbose();
+      const db = new sqlite3.Database('SamaraPower.db');
 
-            console.log('Все заебись, данные в таблице');
-            dataSaved = true;
-            shouldBotReact = true;
-          });
-        }
+      const insertQuery = `
+        INSERT INTO reservBike (user_id, Время_проката, Пол, Дата_проката, Время_брони, Телефон, Имя)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
 
-        if (dataSaved) {
-          delete userDatabike[chatId];
+      const values = [chatId, userData.rentalTime, userData.gender, userData.rentalDate, userData.rentalTimelock, userData.phone, userData.name];
+
+      db.run(insertQuery, values, function(err) {
+        if (err) {
+          console.error('Ошибка при вставке данных: ', err);
           return;
         }
+
+        console.log('Данные успешно вставлены в таблицу');
+        dataSaved = true;
+        shouldBotReact = true;
+      });
+
+      if (dataSaved) {
+        delete userDatabike[chatId];
+        return;
       }
-    });
-  });
+    }
 }
 });
+});
+}
+});
+
 
 
 // Обработчик входящих сообщений
