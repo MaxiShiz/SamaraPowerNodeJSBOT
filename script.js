@@ -6,11 +6,11 @@ let shouldBotReact = true;
 
 //Админ панель
 const connectionadmin = mysql.createConnection({
-  host: '81.200.151.250',
-  user: 'gen_user',
-  password: 'SamaraPower123',
-  database: 'default_db',
-  port: "3306"
+     port: "3306",
+     user: "gen_user",
+     host: "92.51.39.162",
+     database: "default_db",
+     password: "mysqlroot123"
 });
 const AdminID = '-1001656677431';
 const adminbut = [
@@ -58,7 +58,7 @@ bot.on('callback_query', async (query) => {
   if (data === 'approve') { // Нажатие на кнопку подтверждения
     const messageIdadm = sentMessages[bookingId];
     if (messageIdadm) {
-      connectionadmin.query("UPDATE reservBike SET Статус = 'Одобрено' WHERE id = ?", [bookingId], (error) => {
+      connectionadmin.query("UPDATE reservbike SET Статус = 'Одобрено' WHERE id = ?", [bookingId], (error) => {
         if (error) { // Обновление статуса в таблице
           console.error('Ошибка при обновлении данных в таблице: ', error);
         }
@@ -81,7 +81,7 @@ bot.on('callback_query', async (query) => {
   } else if (data === 'reject') { // Нажатие на кнопку отклонения
     const messageIdadm = sentMessages[bookingId];
     if (messageIdadm) {
-      connectionadmin.query("UPDATE reservBike SET Статус = 'Отклонено' WHERE id = ?", [bookingId], (error) => {
+      connectionadmin.query("UPDATE reservbike SET Статус = 'Отклонено' WHERE id = ?", [bookingId], (error) => {
         if (error) { // Обновление статуса в таблице
           console.error('Ошибка при обновлении данных в таблице: ', error);
         }
@@ -130,7 +130,7 @@ function notifyUsersup(chatIdsup, statussup) {
 
 function checkNewBike() { // Функция проверки и оповещения о новых заявках
   const AdminID = '-1001656677431'; // ID админ-чата
-  connectionadmin.query("SELECT * FROM reservBike WHERE Статус = 'Ожидание'", (error, rows) => {
+  connectionadmin.query("SELECT * FROM reservbike WHERE Статус = 'Ожидание'", (error, rows) => {
     if (error) {
       console.error('Ошибка поиска для админ панели: ', error);
       return;
@@ -197,7 +197,7 @@ bot.on('callback_query', async (query) => {
   if (data === 'approvesup') { // Нажатие на кнопку подтверждения
     const messageIdadm = sentMessagessup[bookingIdsup];
     if (messageIdadm) {
-      connectionadmin.query("UPDATE reservSup SET Статус = 'Одобрено' WHERE id = ?", [bookingIdsup], (error) => {
+      connectionadmin.query("UPDATE reservsup SET Статус = 'Одобрено' WHERE id = ?", [bookingIdsup], (error) => {
         if (error) { // Обновление статуса в таблице
           console.error('Ошибка при обновлении данных в таблице: ', error);
         }
@@ -219,7 +219,7 @@ bot.on('callback_query', async (query) => {
   } else if (data === 'rejectsup') { // Нажатие на кнопку отклонения
     const messageIdadm = sentMessagessup[bookingIdsup];
     if (messageIdadm) {
-      connectionadmin.query("UPDATE reservSup SET Статус = 'Отклонено' WHERE id = ?", [bookingIdsup], (error) => {
+      connectionadmin.query("UPDATE reservsup SET Статус = 'Отклонено' WHERE id = ?", [bookingIdsup], (error) => {
         if (error) { // Обновление статуса в таблице
           console.error('Ошибка при обновлении данных в таблице: ', error);
         }
@@ -242,7 +242,7 @@ bot.on('callback_query', async (query) => {
 
 function checkNewSup() { // Функция проверки и оповещения о новых заявках
   const AdminID = '-1001656677431'; // ID админ-чата
-  connectionadmin.query("SELECT * FROM reservSup WHERE Статус = 'Ожидание'", (error, rows) => {
+  connectionadmin.query("SELECT * FROM reservsup WHERE Статус = 'Ожидание'", (error, rows) => {
     if (error) {
       console.error('Ошибка поиска для админ панели: ', error);
       return;
@@ -279,14 +279,14 @@ function checkNewSup() { // Функция проверки и оповещен�
   });
 }
 
-
+/*
   // Создание таблицы
 const connectiontable = mysql.createConnection({
-  host: '81.200.151.250',
-  user: 'gen_user',
-  password: 'SamaraPower123',
-  database: 'default_db',
-  port: "3306"
+     port: "3306",
+     user: "gen_user",
+     host: "92.51.39.162",
+     database: "default_db",
+     password: "mysqlroot123"
 });
 
   const createTableQuery = `
@@ -324,7 +324,7 @@ const connectiontable = mysql.createConnection({
 
     console.log('Строка добавлена!');
   });
-
+*/
 
 
 let userChatIdFM = [];
@@ -479,7 +479,7 @@ bot.sendMessage(chatId, 'Укажите время проката SUP-доски
         `<i>Имя:</i> ${userData.name} \n` +
         'Ожидайте ответа по Вашей заявке!', { parse_mode: 'HTML', reply_markup: keyboardresultsup });
 
-          const query = 'INSERT INTO reservSup (user_id, Время_проката, Дата_проката, Время_брони, Телефон, Имя) VALUES (?, ?, ?, ?, ?, ?)';
+          const query = 'INSERT INTO reservsup (user_id, Время_проката, Дата_проката, Время_брони, Телефон, Имя) VALUES (?, ?, ?, ?, ?, ?)';
           const values = [chatId, userData.rentalTime, userData.rentalDate, userData.rentalTimelock, userData.phone, userData.name];
           const connection = mysql.createConnection({
             host: '81.200.151.250',
@@ -607,14 +607,14 @@ bot.sendMessage(chatId, 'Укажите время проката велосип
         `<i>Имя:</i> ${userData.name} \n` +
         'Ожидайте ответа по Вашей заявке!', { parse_mode: 'HTML', reply_markup: keyboardresult });
 
-          const query = 'INSERT INTO reservBike (user_id, Время_проката, Пол, Дата_проката, Время_брони, Телефон, Имя) VALUES (?, ?, ?, ?, ?, ?, ?)';
+          const query = 'INSERT INTO reservbike (user_id, Время_проката, Пол, Дата_проката, Время_брони, Телефон, Имя) VALUES (?, ?, ?, ?, ?, ?, ?)';
           const values = [chatId, userData.rentalTime, userData.gender, userData.rentalDate, userData.rentalTimelock, userData.phone, userData.name];
           const connection = mysql.createConnection({
-            host: '81.200.151.250',
-            user: 'gen_user',
-            password: 'SamaraPower123',
-            database: 'default_db',
-            port: "3306"
+             port: "3306",
+             user: "gen_user",
+             host: "92.51.39.162",
+             database: "default_db",
+             password: "mysqlroot123"
         });
           
           connection.query(query, values, (err, result) => {
