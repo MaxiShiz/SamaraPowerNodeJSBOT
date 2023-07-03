@@ -484,7 +484,7 @@ bot.sendMessage(chatId, 'Укажите время проката SUP-доски
           `;
 
           // Замените значения переменных values на ваши данные
-          const valuesbike = [user_id, Время_проката, Пол, Дата_проката, Время_брони, Телефон, Имя];
+          const valuesbike = [chatId, Время_проката, Пол, Дата_проката, Время_брони, Телефон, Имя];
 
           db.run(insertQuery, valuesbike, function(err) {
             if (err) {
